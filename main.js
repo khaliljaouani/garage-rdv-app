@@ -2,6 +2,10 @@ const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const isDev = !app.isPackaged;
 const { autoUpdater } = require('electron-updater');
+require('dotenv').config(); // Chargement des variables d’environnement
+
+// 🚀 Lancer le backend (Express + SQLite)
+require(path.join(__dirname, 'backend', 'server.js'));
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -14,14 +18,20 @@ function createWindow() {
     },
   });
 
+  // 🔗 Chargement de l’interface
   if (isDev) {
     win.loadURL('http://localhost:5173');
   } else {
     win.loadFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
   }
 
-  // 🔄 Vérifier les mises à jour en production uniquement
+  // 🔄 Mises à jour (production uniquement)
   if (!isDev) {
+    // ⚠️ Jeton d'accès pour les dépôts privés GitHub
+    autoUpdater.requestHeaders = {
+      Authorization: `token ${process.env.GH_TOKEN}`
+    };
+
     autoUpdater.checkForUpdatesAndNotify();
 
     autoUpdater.on('update-available', () => {
@@ -43,15 +53,20 @@ function createWindow() {
     });
 
     autoUpdater.on('error', (err) => {
-      dialog.showErrorBox('Erreur de mise à jour', err == null ? "Erreur inconnue" : (err.message || err.toString()));
+      dialog.showErrorBox(
+        'Erreur de mise à jour',
+        err == null ? "Erreur inconnue" : (err.message || err.toString())
+      );
     });
   }
 }
 
+// 🚀 Initialisation de l’application
 app.whenReady().then(() => {
   createWindow();
 });
 
+// 🔒 Quitter si toutes les fenêtres sont fermées (hors Mac)
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
