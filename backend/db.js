@@ -1,24 +1,60 @@
-const fs = require('fs');
-const sqlite3 = require('sqlite3').verbose();
-const dbFile = './database.sqlite';
+// backend/db.js
+const { Pool } = require("pg");
+const path = require("path");
+const dotenv = require("dotenv");
 
-// ✅ Crée la base si elle n'existe pas
-if (!fs.existsSync(dbFile)) {
-  const db = new sqlite3.Database(dbFile);
-  db.serialize(() => {
-    db.run(`
-      CREATE TABLE IF NOT EXISTS rdvs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+// ✅ Charger toujours le .env qui est dans le dossier backend,
+//   même si l'app est lancée depuis la racine avec Electron.
+dotenv.config({ path: path.join(__dirname, ".env") });
+
+// (optionnel, pour debug – tu peux supprimer cette ligne après vérification)
+console.log("DATABASE_URL =", process.env.DATABASE_URL);
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+async function initDb() {
+  try {
+    console.log("📦 Connexion à Neon/PostgreSQL...");
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS rdv (
+        id SERIAL PRIMARY KEY,
         vehicule TEXT,
         immatriculation TEXT,
         client TEXT,
+        telephone TEXT,
         intervention TEXT,
         tarif REAL,
         date TEXT,
-        etat TEXT DEFAULT 'en attente',
-        moyenPaiement TEXT
+        typeIntervention TEXT,
+        prisePar TEXT,
+        etat TEXT DEFAULT 'en_attente',
+        moyenPaiement TEXT,
+        deleted INTEGER DEFAULT 0
       );
     `);
-  });
-  db.close();
+
+    console.log("✅ Table rdv prête sur Neon");
+  } catch (err) {
+    console.error("❌ Erreur init DB:", err);
+  }
 }
+
+initDb();
+
+module.exports = {
+  async run(sql, params = []) {
+    return pool.query(sql, params);
+  },
+  async all(sql, params = []) {
+    const r = await pool.query(sql, params);
+    return r.rows;
+  },
+  async get(sql, params = []) {
+    const r = await pool.query(sql, params);
+    return r.rows[0] || null;
+  },
+};

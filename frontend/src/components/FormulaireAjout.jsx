@@ -5,14 +5,20 @@ const FormulaireAjout = ({ onAdded }) => {
   const [formData, setFormData] = useState({
     vehicule: '',
     immatriculation: '',
-    intervention: '',
     client: '',
+    telephone: '', // ✅ Ajout
+    prisePar: '',
+    date: '',
     tarif: '',
-    date: ''
+    intervention: '',
+    heureDebut: '',
+    heureFin: '',
+    typeIntervention: '' // "diagnostic", "mecanique", "vidange"
   });
 
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -24,7 +30,20 @@ const FormulaireAjout = ({ onAdded }) => {
         body: JSON.stringify(formData)
       });
       if (!res.ok) throw new Error('Erreur lors de l\'envoi');
-      setFormData({ vehicule: '', immatriculation: '', intervention: '', client: '', tarif: '', date: '' });
+
+      setFormData({
+        vehicule: '',
+        immatriculation: '',
+        client: '',
+        telephone: '', // ✅ Ajout
+        prisePar: '',
+        date: '',
+        tarif: '',
+        intervention: '',
+        heureDebut: '',
+        heureFin: '',
+        typeIntervention: ''
+      });
       onAdded();
     } catch (err) {
       alert('Erreur : ' + err.message);
@@ -32,26 +51,164 @@ const FormulaireAjout = ({ onAdded }) => {
   };
 
   return (
-    <Card className="mb-4">
-      <Card.Body>
-        <Card.Title>Ajouter un rendez-vous</Card.Title>
-        <Form onSubmit={handleSubmit}>
-          <Row className="mb-3">
-            <Col><Form.Control name="vehicule" placeholder="Véhicule" value={formData.vehicule} onChange={handleChange} required /></Col>
-            <Col><Form.Control name="immatriculation" placeholder="Immatriculation" value={formData.immatriculation} onChange={handleChange} required /></Col>
-          </Row>
-          <Row className="mb-3">
-            <Col><Form.Control name="client" placeholder="Client" value={formData.client} onChange={handleChange} required /></Col>
-            <Col><Form.Control name="tarif" placeholder="Tarif" value={formData.tarif} type="number" onChange={handleChange} required /></Col>
-          </Row>
-          <Row className="mb-3">
-            <Col><Form.Control name="date" placeholder="Date" type="date" value={formData.date} onChange={handleChange} required /></Col>
-            <Col><Form.Control as="textarea" rows={2} name="intervention" placeholder="Intervention" value={formData.intervention} onChange={handleChange} required /></Col>
-          </Row>
-          <Button variant="primary" type="submit">Ajouter</Button>
-        </Form>
-      </Card.Body>
-    </Card>
+    <div style={{ width: '100%' }}>
+      <Card className="mb-4 border-0" style={{ width: '100%' }}>
+        <Card.Body>
+          <Form onSubmit={handleSubmit}>
+            {/* Ligne 1 */}
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Véhicule</Form.Label>
+                  <Form.Control
+                    name="vehicule"
+                    placeholder="Véhicule"
+                    value={formData.vehicule}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+  <Form.Label>Immatriculation</Form.Label>
+  <Form.Control
+    name="immatriculation"
+    placeholder="Ex: AZ-123-ET"
+    value={formData.immatriculation}
+    onChange={(e) => {
+      let value = e.target.value.toUpperCase(); // ✅ met en majuscule
+      value = value.replace(/[^A-Z0-9]/g, ""); // ✅ garde seulement lettres/chiffres
+
+      // ✅ Formattage dynamique
+      if (value.length > 2 && value.length <= 5) {
+        value = value.slice(0, 2) + "-" + value.slice(2);
+      } else if (value.length > 5) {
+        value = value.slice(0, 2) + "-" + value.slice(2, 5) + "-" + value.slice(5, 7);
+      }
+
+      setFormData(prev => ({ ...prev, immatriculation: value }));
+    }}
+    required
+  />
+</Form.Group>
+
+              </Col>
+            </Row>
+
+            {/* Ligne 2 */}
+            <Row className="mb-3">
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Client</Form.Label>
+                  <Form.Control
+                    name="client"
+                    placeholder="Nom du client"
+                    value={formData.client}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Numéro de téléphone</Form.Label>
+                  <Form.Control
+                    type="tel"
+                    name="telephone"
+                    placeholder="Ex: 06 12 34 56 78"
+                    value={formData.telephone}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Personne qui a donné le rendez-vous</Form.Label>
+                  <Form.Control
+                    name="prisePar"
+                    placeholder="Nom de la personne"
+                    value={formData.prisePar}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            {/* Ligne 4 : Intervention */}
+            <Row className="mb-3">
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label>Intervention</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    name="intervention"
+                    placeholder="Détail de l'intervention"
+                    value={formData.intervention}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            {/* Ligne 3 */}
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Tarif (€)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="tarif"
+                    placeholder="Montant"
+                    value={formData.tarif}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            {/* Ligne 6 : Type */}
+            <Form.Group className="mb-4">
+              <Form.Label>Type d’intervention</Form.Label>
+              <Form.Select
+                name="typeIntervention"
+                value={formData.typeIntervention}
+                onChange={handleChange}
+              >
+                <option value="">-- Sélectionner --</option>
+                <option value="diagnostic">Diagnostic</option>
+                <option value="mecanique">Mécanique</option>
+              </Form.Select>
+            </Form.Group>
+
+            <div className="text-end">
+              <Button variant="primary" type="submit">
+                Ajouter le rendez-vous
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+      </Card>
+    </div>
   );
 };
 
