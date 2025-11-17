@@ -3,12 +3,8 @@ const { Pool } = require("pg");
 const path = require("path");
 const dotenv = require("dotenv");
 
-// ✅ Charger toujours le .env qui est dans le dossier backend,
-//   même si l'app est lancée depuis la racine avec Electron.
+// charge backend/.env en local
 dotenv.config({ path: path.join(__dirname, ".env") });
-
-// (optionnel, pour debug – tu peux supprimer cette ligne après vérification)
-console.log("DATABASE_URL =", process.env.DATABASE_URL);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
