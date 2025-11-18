@@ -22,7 +22,7 @@ function corsOrigin(origin, callback) {
     return callback(null, true);
   }
 
-  // Tous les sous-domaines vercel.app (ex : previews)
+  // Tous les sous-domaines vercel.app (préviews)
   if (origin.endsWith(".vercel.app")) {
     return callback(null, true);
   }
@@ -45,15 +45,16 @@ app.options("*", cors({ origin: corsOrigin }));
 
 app.use(express.json());
 
-// Init DB (Neon via ./db)
+// Initialisation DB Neon
 require("./db");
 
 // Routes
 const rdvRoutes = require("./routes/rdvRoutes");
 app.use("/api/rdv", rdvRoutes);
 
-// Lancer serveur
-const PORT = process.env.PORT || 10000;
+// ⚠️ PORT corrigé : 5000 en local, PORT de Render en prod
+const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log(`🚀 Backend en écoute sur port ${PORT}`);
+  console.log(`🚀 Backend en écoute sur http://localhost:${PORT}`);
 });
