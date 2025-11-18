@@ -1,21 +1,29 @@
-// ✅ ModalPaiement.jsx
-import React, { useState } from 'react';
-import { Modal, Button } from 'react-bootstrap';
+// ModalPaiement.jsx
+import React, { useState } from "react";
+import { Modal, Button } from "react-bootstrap";
+
+// 👉 même logique que App.jsx / FormulaireAjout
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const ModalPaiement = ({ show, handleClose, onValider, rdvId }) => {
-  const [moyen, setMoyen] = useState('');
+  const [moyen, setMoyen] = useState("");
 
   const validerPaiement = async () => {
+    if (!moyen || !rdvId) return;
     try {
-      await fetch(`http://localhost:5000/api/rdv/${rdvId}/terminer`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ moyenPaiement: moyen })
+      const res = await fetch(`${API_URL}/api/rdv/${rdvId}/terminer`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moyenPaiement: moyen }),
       });
-      onValider();
+
+      if (!res.ok) throw new Error("Erreur HTTP " + res.status);
+
+      if (onValider) onValider();
       handleClose();
     } catch (err) {
-      alert('Erreur lors du paiement');
+      console.error(err);
+      alert("Erreur lors du paiement : " + err.message);
     }
   };
 
@@ -26,14 +34,22 @@ const ModalPaiement = ({ show, handleClose, onValider, rdvId }) => {
       </Modal.Header>
       <Modal.Body>
         {moyen ? (
-          <div>
-            <p>Confirmer le paiement avec <strong>{moyen}</strong> ?</p>
-            <Button variant="success" onClick={validerPaiement}>Confirmer</Button>
+          <div className="text-center">
+            <p>
+              Confirmer le paiement avec <strong>{moyen}</strong> ?
+            </p>
+            <Button variant="success" onClick={validerPaiement}>
+              Confirmer
+            </Button>
           </div>
         ) : (
           <div className="d-flex justify-content-around">
-            <Button variant="success" onClick={() => setMoyen('espèces')}>Espèces</Button>
-            <Button variant="primary" onClick={() => setMoyen('carte bleue')}>Carte Bleue</Button>
+            <Button variant="success" onClick={() => setMoyen("espèces")}>
+              Espèces
+            </Button>
+            <Button variant="primary" onClick={() => setMoyen("carte bleue")}>
+              Carte Bleue
+            </Button>
           </div>
         )}
       </Modal.Body>

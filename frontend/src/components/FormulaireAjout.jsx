@@ -1,58 +1,65 @@
-import React, { useState } from 'react';
-import { Card, Form, Button, Row, Col } from 'react-bootstrap';
+import React, { useState } from "react";
+import { Card, Form, Button, Row, Col } from "react-bootstrap";
+
+// 👉 même logique que dans App.jsx
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const FormulaireAjout = ({ onAdded }) => {
   const [formData, setFormData] = useState({
-    vehicule: '',
-    immatriculation: '',
-    client: '',
-    telephone: '', // ✅ Ajout
-    prisePar: '',
-    date: '',
-    tarif: '',
-    intervention: '',
-    heureDebut: '',
-    heureFin: '',
-    typeIntervention: '' // "diagnostic", "mecanique", "vidange"
+    vehicule: "",
+    immatriculation: "",
+    client: "",
+    telephone: "",
+    prisePar: "",
+    date: "",
+    tarif: "",
+    intervention: "",
+    heureDebut: "",
+    heureFin: "",
+    typeIntervention: "", // "diagnostic", "mecanique"
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/rdv', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      const res = await fetch(`${API_URL}/api/rdv`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
-      if (!res.ok) throw new Error('Erreur lors de l\'envoi');
 
+      if (!res.ok) throw new Error("Erreur lors de l'envoi (" + res.status + ")");
+
+      // reset formulaire
       setFormData({
-        vehicule: '',
-        immatriculation: '',
-        client: '',
-        telephone: '', // ✅ Ajout
-        prisePar: '',
-        date: '',
-        tarif: '',
-        intervention: '',
-        heureDebut: '',
-        heureFin: '',
-        typeIntervention: ''
+        vehicule: "",
+        immatriculation: "",
+        client: "",
+        telephone: "",
+        prisePar: "",
+        date: "",
+        tarif: "",
+        intervention: "",
+        heureDebut: "",
+        heureFin: "",
+        typeIntervention: "",
       });
-      onAdded();
+
+      if (onAdded) onAdded(); // sécuriser si la prop n’est pas passée
     } catch (err) {
-      alert('Erreur : ' + err.message);
+      console.error(err);
+      alert("Erreur : " + err.message);
     }
   };
 
   return (
-    <div style={{ width: '100%' }}>
-      <Card className="mb-4 border-0" style={{ width: '100%' }}>
+    <div style={{ width: "100%" }}>
+      <Card className="mb-4 border-0" style={{ width: "100%" }}>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             {/* Ligne 1 */}
@@ -69,30 +76,38 @@ const FormulaireAjout = ({ onAdded }) => {
                   />
                 </Form.Group>
               </Col>
+
               <Col md={6}>
                 <Form.Group>
-  <Form.Label>Immatriculation</Form.Label>
-  <Form.Control
-    name="immatriculation"
-    placeholder="Ex: AZ-123-ET"
-    value={formData.immatriculation}
-    onChange={(e) => {
-      let value = e.target.value.toUpperCase(); // ✅ met en majuscule
-      value = value.replace(/[^A-Z0-9]/g, ""); // ✅ garde seulement lettres/chiffres
+                  <Form.Label>Immatriculation</Form.Label>
+                  <Form.Control
+                    name="immatriculation"
+                    placeholder="Ex: AZ-123-ET"
+                    value={formData.immatriculation}
+                    onChange={(e) => {
+                      let value = e.target.value.toUpperCase(); // majuscules
+                      value = value.replace(/[^A-Z0-9]/g, ""); // garder lettres/chiffres
 
-      // ✅ Formattage dynamique
-      if (value.length > 2 && value.length <= 5) {
-        value = value.slice(0, 2) + "-" + value.slice(2);
-      } else if (value.length > 5) {
-        value = value.slice(0, 2) + "-" + value.slice(2, 5) + "-" + value.slice(5, 7);
-      }
+                      // format dynamique XX-999-XX
+                      if (value.length > 2 && value.length <= 5) {
+                        value = value.slice(0, 2) + "-" + value.slice(2);
+                      } else if (value.length > 5) {
+                        value =
+                          value.slice(0, 2) +
+                          "-" +
+                          value.slice(2, 5) +
+                          "-" +
+                          value.slice(5, 7);
+                      }
 
-      setFormData(prev => ({ ...prev, immatriculation: value }));
-    }}
-    required
-  />
-</Form.Group>
-
+                      setFormData((prev) => ({
+                        ...prev,
+                        immatriculation: value,
+                      }));
+                    }}
+                    required
+                  />
+                </Form.Group>
               </Col>
             </Row>
 

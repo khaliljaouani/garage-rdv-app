@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 
+// 👉 même API_URL partout
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const ModalEditionRDV = ({ rdv, onClose, onUpdated }) => {
   const [formData, setFormData] = useState(null);
 
@@ -10,12 +13,12 @@ const ModalEditionRDV = ({ rdv, onClose, onUpdated }) => {
         vehicule: rdv.vehicule || "",
         immatriculation: rdv.immatriculation || "",
         client: rdv.client || "",
-        telephone: rdv.telephone || "", // ✅ Ajout
+        telephone: rdv.telephone || "",
         intervention: rdv.intervention || "",
         tarif: rdv.tarif || "",
         date: rdv.date || "",
         prisePar: rdv.prisePar || "",
-        typeIntervention: rdv.typeIntervention || ""
+        typeIntervention: rdv.typeIntervention || "",
       });
     }
   }, [rdv]);
@@ -26,22 +29,25 @@ const ModalEditionRDV = ({ rdv, onClose, onUpdated }) => {
   };
 
   const handleSubmit = async () => {
+    if (!rdv) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/rdv/${rdv.id}`, {
+      const res = await fetch(`${API_URL}/api/rdv/${rdv.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
       if (data.success) {
-        onUpdated();
+        if (onUpdated) onUpdated();
         onClose();
-        window.location.reload();
+        // plus besoin de reload complet normalement
+        // window.location.reload();
       } else {
         alert("Erreur lors de la mise à jour.");
       }
     } catch (err) {
+      console.error(err);
       alert("Erreur de la mise à jour.");
     }
   };
@@ -74,17 +80,24 @@ const ModalEditionRDV = ({ rdv, onClose, onUpdated }) => {
                   placeholder="Ex: AZ-123-ET"
                   value={formData.immatriculation}
                   onChange={(e) => {
-                    let value = e.target.value.toUpperCase(); // ✅ met en majuscule
-                    value = value.replace(/[^A-Z0-9]/g, ""); // ✅ garde seulement lettres/chiffres
-              
-                    // ✅ Formattage dynamique
+                    let value = e.target.value.toUpperCase();
+                    value = value.replace(/[^A-Z0-9]/g, "");
+
                     if (value.length > 2 && value.length <= 5) {
                       value = value.slice(0, 2) + "-" + value.slice(2);
                     } else if (value.length > 5) {
-                      value = value.slice(0, 2) + "-" + value.slice(2, 5) + "-" + value.slice(5, 7);
+                      value =
+                        value.slice(0, 2) +
+                        "-" +
+                        value.slice(2, 5) +
+                        "-" +
+                        value.slice(5, 7);
                     }
-              
-                    setFormData(prev => ({ ...prev, immatriculation: value }));
+
+                    setFormData((prev) => ({
+                      ...prev,
+                      immatriculation: value,
+                    }));
                   }}
                   required
                 />
@@ -105,7 +118,7 @@ const ModalEditionRDV = ({ rdv, onClose, onUpdated }) => {
             </Col>
             <Col md={4}>
               <Form.Group>
-                <Form.Label>Numéro de téléphone</Form.Label> {/* ✅ Ajout */}
+                <Form.Label>Numéro de téléphone</Form.Label>
                 <Form.Control
                   name="telephone"
                   type="tel"
