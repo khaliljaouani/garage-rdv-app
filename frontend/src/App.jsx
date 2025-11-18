@@ -9,6 +9,9 @@ import {
 import FormulaireAjout from "./components/FormulaireAjout";
 import ModalEditionRDV from "./components/ModalEditionRDV";
 
+// 👉 même principe que dans les autres composants
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 /* ===== Textarea auto-height (autogrow) ===== */
 function AutoGrowTextarea({ value = "", className, style, ...props }) {
   const ref = useRef(null);
@@ -55,7 +58,7 @@ const App = () => {
   const [deleteModal, setDeleteModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Helpers compatibilité DB
+  // Helpers compatibilité DB (camelCase / snake_case)
   const getTypeIntervention = (rdv) =>
     rdv.typeIntervention ?? rdv.typeintervention ?? "";
 
@@ -73,7 +76,7 @@ const App = () => {
   }, []);
 
   const fetchRDV = async () => {
-    const res = await fetch("http://localhost:5000/api/rdv");
+    const res = await fetch(`${API_URL}/api/rdv`);
     const data = await res.json();
     setRdvs(data);
   };
@@ -92,7 +95,7 @@ const App = () => {
     return () => clearInterval(interval);
   }, []);
 
-  /* 🔁 Refresh quand l'app redevient active (option bonus) */
+  /* 🔁 Refresh quand la fenêtre redevient active */
   useEffect(() => {
     const onFocus = () => fetchRDV();
     window.addEventListener("focus", onFocus);
@@ -226,7 +229,7 @@ const App = () => {
   const confirmPaiement = async () => {
     if (!selectedRdv) return;
     try {
-      await fetch(`http://localhost:5000/api/rdv/${selectedRdv.id}/terminer`, {
+      await fetch(`${API_URL}/api/rdv/${selectedRdv.id}/terminer`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ moyenPaiement: selectedPaiement }),
@@ -247,7 +250,7 @@ const App = () => {
   const confirmDelete = async () => {
     if (!selectedRdv) return;
     try {
-      await fetch(`http://localhost:5000/api/rdv/${selectedRdv.id}/supprimer`, {
+      await fetch(`${API_URL}/api/rdv/${selectedRdv.id}/supprimer`, {
         method: "PATCH",
       });
       fetchRDV();
@@ -543,6 +546,9 @@ const App = () => {
           Voulez-vous vraiment supprimer le rendez-vous de{" "}
           <strong>{selectedRdv?.client}</strong> prévu le{" "}
           <strong>{selectedRdv?.date}</strong> ?
+
+
+          
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setDeleteModal(false)}>
