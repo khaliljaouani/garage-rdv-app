@@ -90,7 +90,7 @@ const App = () => {
     const interval = setInterval(() => {
       fetchRDV();
       console.log("🔄 Auto-refresh des RDV (toutes les 2 minutes)");
-    }, 120000); // 120000 ms = 2 minutes
+    }, 10000); // 120000 ms = 2 minutes
 
     return () => clearInterval(interval);
   }, []);
