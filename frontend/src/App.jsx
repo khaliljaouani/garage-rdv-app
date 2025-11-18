@@ -9,6 +9,10 @@ import {
 import FormulaireAjout from "./components/FormulaireAjout";
 import ModalEditionRDV from "./components/ModalEditionRDV";
 
+/* ====== BASE URL API (local + production) ====== */
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+/* =============================================== */
+
 /* ===== Textarea auto-height (autogrow) ===== */
 function AutoGrowTextarea({ value = "", className, style, ...props }) {
   const ref = useRef(null);
@@ -44,7 +48,9 @@ const App = () => {
   const [rdvs, setRdvs] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [selectedType, setSelectedType] = useState("tous");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [editModalRdv, setEditModalRdv] = useState(null);
@@ -59,8 +65,7 @@ const App = () => {
   const getTypeIntervention = (rdv) =>
     rdv.typeIntervention ?? rdv.typeintervention ?? "";
 
-  const getPrisPar = (rdv) =>
-    rdv.prisePar ?? rdv.prisepar ?? "";
+  const getPrisPar = (rdv) => rdv.prisePar ?? rdv.prisepar ?? "";
 
   const getMoyenPaiement = (rdv) =>
     rdv.moyenPaiement ?? rdv.moyenpaiement ?? "";
@@ -73,9 +78,14 @@ const App = () => {
   }, []);
 
   const fetchRDV = async () => {
-    const res = await fetch("http://localhost:5000/api/rdv");
-    const data = await res.json();
-    setRdvs(data);
+    try {
+      const res = await fetch(`${API_URL}/api/rdv`);
+      const data = await res.json();
+      setRdvs(data);
+    } catch (e) {
+      console.error("Erreur fetchRDV:", e);
+      setRdvs([]);
+    }
   };
 
   useEffect(() => {
@@ -88,7 +98,9 @@ const App = () => {
   let filteredRDV;
   if (search.trim() !== "") {
     filteredRDV = rdvs.filter((rdv) => {
-      const matchSearch = `${rdv.client} ${rdv.vehicule} ${rdv.immatriculation} ${rdv.telephone || ""}`
+      const matchSearch = `${rdv.client} ${rdv.vehicule} ${rdv.immatriculation} ${
+        rdv.telephone || ""
+      }`
         .toLowerCase()
         .includes(search.toLowerCase());
       const typeField = getTypeIntervention(rdv);
@@ -209,7 +221,7 @@ const App = () => {
   const confirmPaiement = async () => {
     if (!selectedRdv) return;
     try {
-      await fetch(`http://localhost:5000/api/rdv/${selectedRdv.id}/terminer`, {
+      await fetch(`${API_URL}/api/rdv/${selectedRdv.id}/terminer`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ moyenPaiement: selectedPaiement }),
@@ -230,7 +242,7 @@ const App = () => {
   const confirmDelete = async () => {
     if (!selectedRdv) return;
     try {
-      await fetch(`http://localhost:5000/api/rdv/${selectedRdv.id}/supprimer`, {
+      await fetch(`${API_URL}/api/rdv/${selectedRdv.id}/supprimer`, {
         method: "PATCH",
       });
       fetchRDV();
@@ -566,7 +578,7 @@ const App = () => {
             </Col>
           </Row>
 
-          {/* Navigation jours : 3 boutons bien alignés sur PC, en colonne sur mobile */}
+          {/* Navigation jours */}
           <Row className="mb-3 g-2">
             <Col xs={12} md={4}>
               <Button
