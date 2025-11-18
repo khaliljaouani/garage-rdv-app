@@ -1,6 +1,6 @@
 {
   "name": "garage-rdv-app",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "description": "App de gestion de RDV pour garage",
   "main": "main.js",
   "scripts": {

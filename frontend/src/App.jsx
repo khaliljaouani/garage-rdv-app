@@ -9,6 +9,9 @@ import {
 import FormulaireAjout from "./components/FormulaireAjout";
 import ModalEditionRDV from "./components/ModalEditionRDV";
 
+// 👉 même principe que dans les autres composants
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 /* ===== Textarea auto-height (autogrow) ===== */
 function AutoGrowTextarea({ value = "", className, style, ...props }) {
   const ref = useRef(null);
@@ -55,7 +58,7 @@ const App = () => {
   const [deleteModal, setDeleteModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Helpers compatibilité DB
+  // Helpers compatibilité DB (camelCase / snake_case)
   const getTypeIntervention = (rdv) =>
     rdv.typeIntervention ?? rdv.typeintervention ?? "";
 
@@ -65,22 +68,38 @@ const App = () => {
   const getMoyenPaiement = (rdv) =>
     rdv.moyenPaiement ?? rdv.moyenpaiement ?? "";
 
-  // Détection mobile
+  // détecter mobile / desktop
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // API Fetch
   const fetchRDV = async () => {
-    const res = await fetch("https://garage-rdv-api.onrender.com/api/rdv");
+    const res = await fetch(`${API_URL}/api/rdv`);
     const data = await res.json();
     setRdvs(data);
   };
 
   useEffect(() => {
     fetchRDV();
+  }, []);
+
+  /* 🔄 AUTO-REFRESH CHAQUE 2 MINUTES */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchRDV();
+      console.log("🔄 Auto-refresh des RDV (toutes les 2 minutes)");
+    }, 10000); // 120000 ms = 2 minutes
+
+    return () => clearInterval(interval);
+  }, []);
+
+  /* 🔁 Refresh quand la fenêtre redevient active */
+  useEffect(() => {
+    const onFocus = () => fetchRDV();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   const todayDate = new Date().toISOString().split("T")[0];
@@ -210,14 +229,11 @@ const App = () => {
   const confirmPaiement = async () => {
     if (!selectedRdv) return;
     try {
-      await fetch(
-        `https://garage-rdv-api.onrender.com/api/rdv/${selectedRdv.id}/terminer`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ moyenPaiement: selectedPaiement }),
-        }
-      );
+      await fetch(`${API_URL}/api/rdv/${selectedRdv.id}/terminer`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moyenPaiement: selectedPaiement }),
+      });
       fetchRDV();
       setConfirmModal(false);
       setSelectedRdv(null);
@@ -234,12 +250,9 @@ const App = () => {
   const confirmDelete = async () => {
     if (!selectedRdv) return;
     try {
-      await fetch(
-        `https://garage-rdv-api.onrender.com/api/rdv/${selectedRdv.id}/supprimer`,
-        {
-          method: "PATCH",
-        }
-      );
+      await fetch(`${API_URL}/api/rdv/${selectedRdv.id}/supprimer`, {
+        method: "PATCH",
+      });
       fetchRDV();
       setDeleteModal(false);
       setSelectedRdv(null);
@@ -248,7 +261,7 @@ const App = () => {
     }
   };
 
-  // ------------------ LISTE MOBILE ------------------
+  // rendu mobile : cartes
   const renderMobileList = () => (
     <div>
       {sortedRDV.map((rdv) => (
@@ -356,7 +369,7 @@ const App = () => {
     </div>
   );
 
-  // ------------------ TABLEAU DESKTOP ------------------
+  // rendu desktop : tableau
   const renderDesktopTable = () => (
     <Table bordered hover responsive className="text-center">
       <thead>
@@ -471,8 +484,6 @@ const App = () => {
 
   return (
     <Container fluid className="p-3 p-md-4">
-
-      {/* Bouton ajouter */}
       <Button
         className="mb-3 w-100 app-header-button"
         onClick={() => setModalOpen(true)}
@@ -480,7 +491,7 @@ const App = () => {
         Prendre un rendez-vous
       </Button>
 
-      {/* ------ Modal ajout ------ */}
+      {/* Modal ajout */}
       <Modal show={modalOpen} onHide={() => setModalOpen(false)} centered size="xl">
         <Modal.Header closeButton>
           <Modal.Title>Ajouter un rendez-vous</Modal.Title>
@@ -495,7 +506,7 @@ const App = () => {
         </Modal.Body>
       </Modal>
 
-      {/* ------ Modal édition ------ */}
+      {/* Modal édition */}
       {editModalRdv && (
         <ModalEditionRDV
           rdv={editModalRdv}
@@ -507,7 +518,7 @@ const App = () => {
         />
       )}
 
-      {/* ------ Modal paiement ------ */}
+      {/* Modal paiement */}
       <Modal show={confirmModal} onHide={() => setConfirmModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Confirmation de paiement</Modal.Title>
@@ -526,7 +537,7 @@ const App = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* ------ Modal suppression ------ */}
+      {/* Modal suppression */}
       <Modal show={deleteModal} onHide={() => setDeleteModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Confirmation de suppression</Modal.Title>
@@ -535,6 +546,9 @@ const App = () => {
           Voulez-vous vraiment supprimer le rendez-vous de{" "}
           <strong>{selectedRdv?.client}</strong> prévu le{" "}
           <strong>{selectedRdv?.date}</strong> ?
+
+
+          
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setDeleteModal(false)}>
@@ -546,14 +560,13 @@ const App = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* ----------- panneau principal ----------- */}
       <Card className="app-card">
         <Card.Body>
           <Card.Title className="mb-3 app-section-title">
             Liste des rendez-vous
           </Card.Title>
 
-          {/* Recherche */}
+          {/* Barre de recherche */}
           <Row className="mb-3 g-2">
             <Col md={6}>
               <Form.Control
@@ -632,11 +645,10 @@ const App = () => {
             </Button>
           </div>
 
-          {/* Desktop / Mobile */}
+          {/* Desktop vs Mobile */}
           {isMobile ? renderMobileList() : renderDesktopTable()}
         </Card.Body>
       </Card>
-
     </Container>
   );
 };
