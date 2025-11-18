@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 
-// 👉 même API_URL partout
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+/* même logique URL */
+const API_URL = window.location.origin.includes("vercel.app")
+  ? "https://garage-rdv-app-4.onrender.com"
+  : "http://localhost:5000";
 
 const ModalEditionRDV = ({ rdv, onClose, onUpdated }) => {
   const [formData, setFormData] = useState(null);
@@ -17,8 +19,8 @@ const ModalEditionRDV = ({ rdv, onClose, onUpdated }) => {
         intervention: rdv.intervention || "",
         tarif: rdv.tarif || "",
         date: rdv.date || "",
-        prisePar: rdv.prisePar || "",
-        typeIntervention: rdv.typeIntervention || "",
+        prisePar: rdv.prisePar || rdv.prisepar || "",
+        typeIntervention: rdv.typeIntervention || rdv.typeintervention || "",
       });
     }
   }, [rdv]);
@@ -29,7 +31,6 @@ const ModalEditionRDV = ({ rdv, onClose, onUpdated }) => {
   };
 
   const handleSubmit = async () => {
-    if (!rdv) return;
     try {
       const res = await fetch(`${API_URL}/api/rdv/${rdv.id}`, {
         method: "PUT",
@@ -39,15 +40,12 @@ const ModalEditionRDV = ({ rdv, onClose, onUpdated }) => {
 
       const data = await res.json();
       if (data.success) {
-        if (onUpdated) onUpdated();
+        onUpdated();
         onClose();
-        // plus besoin de reload complet normalement
-        // window.location.reload();
       } else {
         alert("Erreur lors de la mise à jour.");
       }
     } catch (err) {
-      console.error(err);
       alert("Erreur de la mise à jour.");
     }
   };

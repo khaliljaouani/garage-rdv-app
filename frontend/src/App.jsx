@@ -1,16 +1,35 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import {
-  Container, Button, Table, Modal, Form, Card, Badge, Row, Col
+  Container,
+  Button,
+  Table,
+  Modal,
+  Form,
+  Card,
+  Badge,
+  Row,
+  Col,
 } from "react-bootstrap";
 import {
-  FaSortUp, FaSortDown, FaTools, FaStethoscope,
-  FaMoneyBillWave, FaCreditCard, FaPencilAlt, FaTrash, FaCar, FaCalendarAlt
+  FaSortUp,
+  FaSortDown,
+  FaTools,
+  FaStethoscope,
+  FaMoneyBillWave,
+  FaCreditCard,
+  FaPencilAlt,
+  FaTrash,
+  FaCar,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import FormulaireAjout from "./components/FormulaireAjout";
 import ModalEditionRDV from "./components/ModalEditionRDV";
 
-// 👉 même principe que dans les autres composants
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+/* ========= API URL (Vercel => Render, sinon localhost) ========= */
+const API_URL = window.location.origin.includes("vercel.app")
+  ? "https://garage-rdv-app-4.onrender.com"
+  : "http://localhost:5000";
+/* =============================================================== */
 
 /* ===== Textarea auto-height (autogrow) ===== */
 function AutoGrowTextarea({ value = "", className, style, ...props }) {
@@ -47,7 +66,9 @@ const App = () => {
   const [rdvs, setRdvs] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [selectedType, setSelectedType] = useState("tous");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [editModalRdv, setEditModalRdv] = useState(null);
@@ -58,12 +79,11 @@ const App = () => {
   const [deleteModal, setDeleteModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Helpers compatibilité DB (camelCase / snake_case)
+  // helpers compat champs DB
   const getTypeIntervention = (rdv) =>
     rdv.typeIntervention ?? rdv.typeintervention ?? "";
 
-  const getPrisPar = (rdv) =>
-    rdv.prisePar ?? rdv.prisepar ?? "";
+  const getPrisPar = (rdv) => rdv.prisePar ?? rdv.prisepar ?? "";
 
   const getMoyenPaiement = (rdv) =>
     rdv.moyenPaiement ?? rdv.moyenpaiement ?? "";
@@ -76,30 +96,17 @@ const App = () => {
   }, []);
 
   const fetchRDV = async () => {
-    const res = await fetch(`${API_URL}/api/rdv`);
-    const data = await res.json();
-    setRdvs(data);
+    try {
+      const res = await fetch(`${API_URL}/api/rdv`);
+      const data = await res.json();
+      setRdvs(data);
+    } catch (err) {
+      console.error("Erreur fetchRDV:", err);
+    }
   };
 
   useEffect(() => {
     fetchRDV();
-  }, []);
-
-  /* 🔄 AUTO-REFRESH CHAQUE 2 MINUTES */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchRDV();
-      console.log("🔄 Auto-refresh des RDV (toutes les 2 minutes)");
-    }, 10000); // 120000 ms = 2 minutes
-
-    return () => clearInterval(interval);
-  }, []);
-
-  /* 🔁 Refresh quand la fenêtre redevient active */
-  useEffect(() => {
-    const onFocus = () => fetchRDV();
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   const todayDate = new Date().toISOString().split("T")[0];
@@ -108,7 +115,9 @@ const App = () => {
   let filteredRDV;
   if (search.trim() !== "") {
     filteredRDV = rdvs.filter((rdv) => {
-      const matchSearch = `${rdv.client} ${rdv.vehicule} ${rdv.immatriculation} ${rdv.telephone || ""}`
+      const matchSearch = `${rdv.client} ${rdv.vehicule} ${
+        rdv.immatriculation
+      } ${rdv.telephone || ""}`
         .toLowerCase()
         .includes(search.toLowerCase());
       const typeField = getTypeIntervention(rdv);
@@ -261,7 +270,7 @@ const App = () => {
     }
   };
 
-  // rendu mobile : cartes
+  /* ============= Rendu mobile (cartes) ============= */
   const renderMobileList = () => (
     <div>
       {sortedRDV.map((rdv) => (
@@ -369,7 +378,7 @@ const App = () => {
     </div>
   );
 
-  // rendu desktop : tableau
+  /* ============= Rendu desktop (tableau) ============= */
   const renderDesktopTable = () => (
     <Table bordered hover responsive className="text-center">
       <thead>
@@ -419,7 +428,9 @@ const App = () => {
               {rdv.tarif != null ? `${rdv.tarif} €` : "-"}
             </td>
             <td className="align-top">{rdv.date}</td>
-            <td className="align-top">{renderBadge(getTypeIntervention(rdv))}</td>
+            <td className="align-top">
+              {renderBadge(getTypeIntervention(rdv))}
+            </td>
             <td className="align-top">{getPrisPar(rdv) || "-"}</td>
             <td className="align-top">
               {rdv.etat === "termine" ? (
@@ -515,6 +526,7 @@ const App = () => {
             fetchRDV();
             setEditModalRdv(null);
           }}
+          apiUrl={API_URL}
         />
       )}
 
@@ -546,9 +558,6 @@ const App = () => {
           Voulez-vous vraiment supprimer le rendez-vous de{" "}
           <strong>{selectedRdv?.client}</strong> prévu le{" "}
           <strong>{selectedRdv?.date}</strong> ?
-
-
-          
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setDeleteModal(false)}>

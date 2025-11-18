@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
 
-// 👉 même logique que dans App.jsx
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+/* même logique que dans App.jsx */
+const API_URL = window.location.origin.includes("vercel.app")
+  ? "https://garage-rdv-app-4.onrender.com"
+  : "http://localhost:5000";
 
 const FormulaireAjout = ({ onAdded }) => {
   const [formData, setFormData] = useState({
@@ -16,7 +18,7 @@ const FormulaireAjout = ({ onAdded }) => {
     intervention: "",
     heureDebut: "",
     heureFin: "",
-    typeIntervention: "", // "diagnostic", "mecanique"
+    typeIntervention: "",
   });
 
   const handleChange = (e) => {
@@ -32,10 +34,8 @@ const FormulaireAjout = ({ onAdded }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
+      if (!res.ok) throw new Error("Erreur lors de l'envoi");
 
-      if (!res.ok) throw new Error("Erreur lors de l'envoi (" + res.status + ")");
-
-      // reset formulaire
       setFormData({
         vehicule: "",
         immatriculation: "",
@@ -49,10 +49,8 @@ const FormulaireAjout = ({ onAdded }) => {
         heureFin: "",
         typeIntervention: "",
       });
-
-      if (onAdded) onAdded(); // sécuriser si la prop n’est pas passée
+      onAdded();
     } catch (err) {
-      console.error(err);
       alert("Erreur : " + err.message);
     }
   };
@@ -76,7 +74,6 @@ const FormulaireAjout = ({ onAdded }) => {
                   />
                 </Form.Group>
               </Col>
-
               <Col md={6}>
                 <Form.Group>
                   <Form.Label>Immatriculation</Form.Label>
@@ -85,10 +82,9 @@ const FormulaireAjout = ({ onAdded }) => {
                     placeholder="Ex: AZ-123-ET"
                     value={formData.immatriculation}
                     onChange={(e) => {
-                      let value = e.target.value.toUpperCase(); // majuscules
-                      value = value.replace(/[^A-Z0-9]/g, ""); // garder lettres/chiffres
+                      let value = e.target.value.toUpperCase();
+                      value = value.replace(/[^A-Z0-9]/g, "");
 
-                      // format dynamique XX-999-XX
                       if (value.length > 2 && value.length <= 5) {
                         value = value.slice(0, 2) + "-" + value.slice(2);
                       } else if (value.length > 5) {
@@ -154,7 +150,7 @@ const FormulaireAjout = ({ onAdded }) => {
               </Col>
             </Row>
 
-            {/* Ligne 4 : Intervention */}
+            {/* Intervention */}
             <Row className="mb-3">
               <Col md={12}>
                 <Form.Group>
@@ -201,7 +197,7 @@ const FormulaireAjout = ({ onAdded }) => {
               </Col>
             </Row>
 
-            {/* Ligne 6 : Type */}
+            {/* Type */}
             <Form.Group className="mb-4">
               <Form.Label>Type d’intervention</Form.Label>
               <Form.Select
